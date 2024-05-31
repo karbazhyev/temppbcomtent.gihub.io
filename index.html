@@ -24,7 +24,7 @@
                 <!-- Options will be populated dynamically -->
             </select><br><br>
             <label for="problem-type">Problem Type:</label>
-            <select id="problem-type-select">
+            <select id="problem-type-select" disabled>
                 <!-- Options will be populated dynamically -->
             </select>
         </div>
@@ -59,12 +59,13 @@
                         };
                     });
 
-                    // Populate filters
+                    // Populate curriculum filter
                     const curriculumSelect = document.getElementById('curriculum-select');
                     const problemTypeSelect = document.getElementById('problem-type-select');
+                    const problemsList = document.getElementById('problems-list');
+                    const problemBodyContent = document.getElementById('problem-body-content');
 
                     const curriculums = [...new Set(problems.map(p => p.curriculum))].sort();
-                    const problemTypes = [...new Set(problems.map(p => p.problem_type))].sort();
 
                     curriculums.forEach(curriculum => {
                         const option = document.createElement('option');
@@ -73,40 +74,49 @@
                         curriculumSelect.appendChild(option);
                     });
 
-                    problemTypes.forEach(problemType => {
-                        const option = document.createElement('option');
-                        option.value = problemType;
-                        option.textContent = problemType;
-                        problemTypeSelect.appendChild(option);
-                    });
+                    // Function to display problem types by curriculum
+                    function displayProblemTypes() {
+                        const selectedCurriculum = curriculumSelect.value;
 
-                    // Function to display problems by filters
+                        const filteredProblems = problems.filter(p => p.curriculum === selectedCurriculum);
+                        const problemTypes = [...new Set(filteredProblems.map(p => p.problem_type))].sort();
+
+                        problemTypeSelect.innerHTML = '';
+                        problemTypes.forEach(problemType => {
+                            const option = document.createElement('option');
+                            option.value = problemType;
+                            option.textContent = problemType;
+                            problemTypeSelect.appendChild(option);
+                        });
+
+                        problemTypeSelect.disabled = false;
+                        problemTypeSelect.onchange = displayProblems;
+                    }
+
+                    // Function to display problems by problem type
                     function displayProblems() {
                         const selectedCurriculum = curriculumSelect.value;
                         const selectedProblemType = problemTypeSelect.value;
 
-                        const problemsList = document.getElementById('problems-list');
-                        problemsList.innerHTML = '';
+                        const filteredProblems = problems.filter(p => p.curriculum === selectedCurriculum && p.problem_type === selectedProblemType);
 
-                        problems
-                            .filter(p => p.curriculum === selectedCurriculum && p.problem_type === selectedProblemType)
-                            .forEach(problem => {
-                                const div = document.createElement('div');
-                                div.className = 'problem';
-                                div.textContent = problem.problem_id;
-                                div.onclick = () => displayProblemBody(problem.problem_body);
-                                problemsList.appendChild(div);
-                            });
+                        problemsList.innerHTML = '';
+                        filteredProblems.forEach(problem => {
+                            const div = document.createElement('div');
+                            div.className = 'problem';
+                            div.textContent = problem.problem_id;
+                            div.onclick = () => displayProblemBody(problem.problem_body);
+                            problemsList.appendChild(div);
+                        });
                     }
 
                     // Function to display problem body
                     function displayProblemBody(body) {
-                        document.getElementById('problem-body-content').innerHTML = body;
+                        problemBodyContent.innerHTML = body;
                     }
 
-                    // Display problems when filters are changed
-                    curriculumSelect.onchange = displayProblems;
-                    problemTypeSelect.onchange = displayProblems;
+                    // Display problem types when curriculum is selected
+                    curriculumSelect.onchange = displayProblemTypes;
                 })
                 .catch(error => console.error('Error fetching the CSV file:', error));
         });
