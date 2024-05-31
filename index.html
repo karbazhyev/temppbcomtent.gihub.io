@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem Browser</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; }
+        .filters { width: 20%; padding: 10px; }
+        .problems { width: 30%; padding: 10px; }
+        .problem-body { width: 50%; padding: 10px; }
+        .scrollable { max-height: 500px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
+        .problem { cursor: pointer; padding: 5px; border-bottom: 1px solid #ddd; }
+        .problem:hover { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="filters">
+            <h3>Filters</h3>
+            <label for="curriculum">Curriculum:</label>
+            <select id="curriculum-select">
+                <!-- Options will be populated dynamically -->
+            </select><br><br>
+            <label for="problem-type">Problem Type:</label>
+            <select id="problem-type-select">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <div class="problems scrollable">
+            <h3>Problems</h3>
+            <div id="problems-list">
+                <!-- Problems will be listed here -->
+            </div>
+        </div>
+        <div class="problem-body">
+            <h3>Problem Body</h3>
+            <div id="problem-body-content">
+                <!-- Problem body will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Fetch the CSV file
+            fetch('ProblemBodies_23_truncated.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const rows = data.split('\n').slice(1); // Remove header row
+                    const problems = rows.map(row => {
+                        const cols = row.split(',');
+                        return {
+                            problem_id: cols[0],
+                            curriculum: cols[6],
+                            problem_type: cols[12],
+                            problem_body: cols[13]
+                        };
+                    });
+
+                    // Populate filters
+                    const curriculumSelect = document.getElementById('curriculum-select');
+                    const problemTypeSelect = document.getElementById('problem-type-select');
+
+                    const curriculums = [...new Set(problems.map(p => p.curriculum))].sort();
+                    const problemTypes = [...new Set(problems.map(p => p.problem_type))].sort();
+
+                    curriculums.forEach(curriculum => {
+                        const option = document.createElement('option');
+                        option.value = curriculum;
+                        option.textContent = curriculum;
+                        curriculumSelect.appendChild(option);
+                    });
+
+                    problemTypes.forEach(problemType => {
+                        const option = document.createElement('option');
+                        option.value = problemType;
+                        option.textContent = problemType;
+                        problemTypeSelect.appendChild(option);
+                    });
+
+                    // Function to display problems by filters
+                    function displayProblems() {
+                        const selectedCurriculum = curriculumSelect.value;
+                        const selectedProblemType = problemTypeSelect.value;
+
+                        const problemsList = document.getElementById('problems-list');
+                        problemsList.innerHTML = '';
+
+                        problems
+                            .filter(p => p.curriculum === selectedCurriculum && p.problem_type === selectedProblemType)
+                            .forEach(problem => {
+                                const div = document.createElement('div');
+                                div.className = 'problem';
+                                div.textContent = problem.problem_id;
+                                div.onclick = () => displayProblemBody(problem.problem_body);
+                                problemsList.appendChild(div);
+                            });
+                    }
+
+                    // Function to display problem body
+                    function displayProblemBody(body) {
+                        document.getElementById('problem-body-content').innerHTML = body;
+                    }
+
+                    // Display problems when filters are changed
+                    curriculumSelect.onchange = displayProblems;
+                    problemTypeSelect.onchange = displayProblems;
+                })
+                .catch(error => console.error('Error fetching the CSV file:', error));
+        });
+    </script>
+</body>
+</html>
